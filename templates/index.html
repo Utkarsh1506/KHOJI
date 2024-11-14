@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ransomware Detection</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Ransomware Detection System</h2>
+        <form id="scan-form">
+            <div class="form-group">
+                <label for="file">Choose File to Scan:</label>
+                <input type="file" id="file" name="file" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Scan</button>
+        </form>
+        <div class="mt-4" id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById("scan-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+        
+            const formData = new FormData();
+            const fileInput = document.getElementById("file");
+            formData.append("file", fileInput.files[0]);
+        
+            fetch("/scan", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not OK");
+                }
+                return response.json(); // Parse JSON response
+            })
+            .then(data => {
+                const resultDiv = document.getElementById("result");
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${data.message}</div>`;
+                } else if (data.status === "Ransomware Detected") {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>${data.status}</strong><br>
+                            Entropy: ${data.entropy}<br>
+                            <strong>Logs:</strong><br>
+                            ${data.logs.join("<br>")}
+                            <strong>Mitigations:</strong><br>
+                            ${data.mitigations.join("<br>")}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>${data.status}</strong><br>
+                            Entropy: ${data.entropy}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById("result");
+                resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message}</div>`;
+            });
+        });
+        
+    </script>
+</body>
+</html>
